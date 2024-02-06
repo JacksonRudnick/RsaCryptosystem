@@ -50,6 +50,21 @@ def get_private_key(phi, e):
 
 	return d
 
+def encrypt_message(message, public_key, pq):
+	return lift(Mod(message,public_key)^pq)
+
+def encode(s):
+    s = str(s)
+    return sum(ord(s[i])*256^i for i in range(len(s)))
+
+def decode(n):
+    n = Integer(n)
+    v = []
+    while n != 0:
+        v.append(chr(n % 256))
+        n //= 256     # this replaces n by floor(n/256)
+    return ''.join(v)
+
 ##################
 #START OF PROGRAM#
 ##################
@@ -63,14 +78,15 @@ while prime_test(p) != True:
 while prime_test(q) != True:
 	q = prime_generation()
 
+n = p*q
 phi = (p-1)*(q-1)
 
-e = get_public_key(phi)
+public_key = get_public_key(phi)
 
-d = get_private_key(phi, e)
+private_key = get_private_key(phi, public_key)
 
-print("Public key :: ", e, "\n")
-print("Private key :: ", d, "\n")
+print("Public key :: ", public_key, "\n")
+print("Private key :: ", private_key, "\n")
 
 print("Public key(1) or Private key(2) user?")
 
@@ -84,6 +100,13 @@ while user_operation != 1 and user_operation != 2:
 while user_operation == 1:
 	#Public Key User
 	print("Encrypt(1) or Authenticate Signature(2)?")
+	user_operation = int(input())
+
+	if user_operation == 1:
+		print("What is your message?")
+		m = encode(input())
+		print(encrypt_message(m, public_key, n))
+
 
 while user_operation == 2:
 	#Private Key User
