@@ -1,5 +1,6 @@
 import random
 import math
+import sys
 
 def prime_generation():
 	num_of_bits = 256
@@ -51,19 +52,16 @@ def get_private_key(phi, e):
 	return d
 
 def encrypt_message(message, public_key, pq):
-	return lift(Mod(message,public_key)^pq)
+	return pow(message, public_key, pq)
+
+def decrypt_message(ciphertext, private_key, pq):
+	return pow(ciphertext, private_key, pq)
 
 def encode(s):
-    s = str(s)
-    return sum(ord(s[i])*256^i for i in range(len(s)))
+	return int.from_bytes(bytes(s, 'utf-8'), byteorder=sys.byteorder)
 
 def decode(n):
-    n = Integer(n)
-    v = []
-    while n != 0:
-        v.append(chr(n % 256))
-        n //= 256     # this replaces n by floor(n/256)
-    return ''.join(v)
+    return (n.to_bytes(255, byteorder=sys.byteorder)).decode('utf-8', "ignore")
 
 ##################
 #START OF PROGRAM#
@@ -81,35 +79,77 @@ while prime_test(q) != True:
 n = p*q
 phi = (p-1)*(q-1)
 
-public_key = get_public_key(phi)
+#public user key
+public_key = None
 
-private_key = get_private_key(phi, public_key)
+#private user key
+private_key = None
 
-print("Public key :: ", public_key, "\n")
-print("Private key :: ", private_key, "\n")
+while True:
+	print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\nEnter your choice: ")
 
-print("Public key(1) or Private key(2) user?")
+	user_exit = int(input())
+	'''
+	#User failed to input an allowed option
+	if user_exit != 1 and user_exit != 2 and user_exit != 3:
+		print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\nEnter your choice: ")
 
-user_operation = int(input())
-
-while user_operation != 1 and user_operation != 2:
-	print("Public key(1) or Private key(2) user?")
-
-	user_operation = int(input())
-
-while user_operation == 1:
+		user_exit = int(input())
+	'''
 	#Public Key User
-	print("Encrypt(1) or Authenticate Signature(2)?")
-	user_operation = int(input())
+	if user_exit == 1:
+		#if they dont already have a defined key
+		if public_key == None:
+			print("Please enter your public key:")
+			try:
+				public_key = int(input())
+			#If they input anything other than an int
+			except ValueError:
+				print("Key Error")
+				quit()
 
-	if user_operation == 1:
-		print("What is your message?")
-		m = encode(input())
-		print(encrypt_message(m, public_key, n))
+		#options
+		print("Please select an option: \n	1. Encrypt A Message\n	2. Authenticate A Digital Signature\nEnter your choice: ")
+		user_operation = int(input())
 
+		#Encrypting a message
+		if user_operation == 1:
+			print("What is your message?")
+			m = encode(input())
+			print(encrypt_message(m, public_key, n))
+		#Authenticating a signature
+		elif user_operation == 2:
+			print("lullllllllllllll")
 
-while user_operation == 2:
 	#Private Key User
-	print("Decrypt(1) or Generate Signature(2)")
+	if user_exit == 2:
+		#if they dont already have a defined key
+		if private_key == None:
+			print("Please enter your private key:")
+			try:
+				private_key = int(input())
+			#If they input anything other than an int
+			except ValueError:
+				print("Key Error")
+				quit()
+		
+		print("Please select an option: \n	1. Decrypt A Message\n	2. Sign A Digital Signature\n	3. Show The Keys\nEnter your choice: ")
+		user_operation = int(input())
 
-print("here")
+		#Dencrypting a message
+		if user_operation == 1:
+			print("What is the message?")
+			ciphertext = int(input())
+			print(decode(decrypt_message(ciphertext, private_key, n)))
+		#Authenticating a signature
+		elif user_operation == 2:
+			print("lullllllllllllll")
+
+	#User wants to generate new keys
+	if user_exit == 3:
+		public_key = get_public_key(phi)
+
+		private_key = get_private_key(phi, public_key)
+
+		print("Public Key :: ", public_key, "\n")
+		print("Private Key :: ", private_key, "\n")
