@@ -2,6 +2,7 @@ import random
 import math
 import sys
 
+#generate large prime numbers
 def prime_generation():
 	num_of_bits = 256
 	
@@ -25,6 +26,7 @@ def prime_test(n):
 	
 	return True
 
+#create public key using phi
 def get_public_key(phi):
 	pq = (p-1)*(q-1)
 	
@@ -44,6 +46,7 @@ def extended_gcd(a, b):
 
 	return y, x-a//b*y, z
 
+#create private key using extended euclids algo
 def get_private_key(phi, e):
 	x = extended_gcd(e, phi)
 
@@ -51,33 +54,31 @@ def get_private_key(phi, e):
 
 	return d
 
+#encrypt message
 def encrypt_message(message, public_key, pq):
-	return pow(message, public_key, pq)
+	return pow(encode(message), public_key, pq)
 
+#decrypt message
 def decrypt_message(ciphertext, private_key, pq):
-	return pow(ciphertext, private_key, pq)
+	return decode(pow(ciphertext, private_key, pq))
 
+#encode message into a number
 def encode(s):
 	return int.from_bytes(bytes(s, 'utf-8'), byteorder=sys.byteorder)
 
+#decode message into a number
 def decode(n):
     return (n.to_bytes(255, byteorder=sys.byteorder)).decode('utf-8', "ignore")
+
+def generate_signature(name, private_key, n):
+	return pow(encode(name), private_key, n)
+
+def check_signature(signature, public_key, n):
+	return decode(pow(int(signature), public_key, n))
 
 ##################
 #START OF PROGRAM#
 ##################
-
-p = 1
-q = 1
-
-while prime_test(p) != True:
-	p = prime_generation()
-
-while prime_test(q) != True:
-	q = prime_generation()
-
-n = p*q
-phi = (p-1)*(q-1)
 
 #public user key
 public_key = None
@@ -85,17 +86,15 @@ public_key = None
 #private user key
 private_key = None
 
+#established n
+n = None
+
+#main loop
 while True:
-	print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\nEnter your choice: ")
+	print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\n	4. Exit\nEnter your choice: ")
 
 	user_exit = int(input())
-	'''
-	#User failed to input an allowed option
-	if user_exit != 1 and user_exit != 2 and user_exit != 3:
-		print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\nEnter your choice: ")
 
-		user_exit = int(input())
-	'''
 	#Public Key User
 	if user_exit == 1:
 		#if they dont already have a defined key
@@ -115,11 +114,23 @@ while True:
 		#Encrypting a message
 		if user_operation == 1:
 			print("What is your message?")
-			m = encode(input())
+			m = input()
 			print(encrypt_message(m, public_key, n))
 		#Authenticating a signature
 		elif user_operation == 2:
-			print("lullllllllllllll")
+			if n == None:
+				print("Please enter n for your public key:")
+				try:
+					n = int(input())
+				#If they input anything other than an int
+				except ValueError:
+					print("Input Error")
+					quit()
+
+			print("Please input the signature:")
+			name = input()
+			
+			print(check_signature(name, public_key, n))
 
 	#Private Key User
 	if user_exit == 2:
@@ -133,23 +144,57 @@ while True:
 				print("Key Error")
 				quit()
 		
-		print("Please select an option: \n	1. Decrypt A Message\n	2. Sign A Digital Signature\n	3. Show The Keys\nEnter your choice: ")
+		print("Please select an option: \n	1. Decrypt A Message\n	2. Generate A Digital Signature\nEnter your choice: ")
 		user_operation = int(input())
 
 		#Dencrypting a message
 		if user_operation == 1:
 			print("What is the message?")
-			ciphertext = int(input())
-			print(decode(decrypt_message(ciphertext, private_key, n)))
-		#Authenticating a signature
+			try:
+				ciphertext = int(input())
+			except ValueError:
+				print("Message Error")
+				quit()
+				
+			print(decrypt_message(ciphertext, private_key, n))
+		#Creating a signature
 		elif user_operation == 2:
-			print("lullllllllllllll")
+			if n == None:
+				print("Please enter n for your private key:")
+				try:
+					n = int(input())
+				#If they input anything other than an int
+				except ValueError:
+					print("Input Error")
+					quit()
+
+			print("Please input your signature:")
+			name = input()
+			
+			print(generate_signature(name, private_key, n))
 
 	#User wants to generate new keys
 	if user_exit == 3:
+		p = 1
+		q = 1
+
+		while prime_test(p) != True:
+			p = prime_generation()
+
+		while prime_test(q) != True:
+			q = prime_generation()
+
+		n = p*q
+		phi = (p-1)*(q-1)
+		
 		public_key = get_public_key(phi)
 
 		private_key = get_private_key(phi, public_key)
 
 		print("Public Key :: ", public_key, "\n")
 		print("Private Key :: ", private_key, "\n")
+		print("N :: ", n, "\n")
+
+	#User wants to exit the program
+	if user_exit == 4:
+		quit()
