@@ -96,120 +96,156 @@ private_key = None
 #established n
 n = None
 
+#lists for storing encryption and lengths
+encrypt_list = list()
+lenlist = list()
+
+#lists for storing signatures and the message
+name_list = list()
+signature_list = list()
+
+#generating keys before running main loop
+p = 1
+q = 1
+
+while prime_test(p) != True:
+    p = prime_generation()
+    
+while prime_test(q) != True:
+    q = prime_generation()
+    
+n = p*q
+phi = (p-1)*(q-1)
+
+public_key = get_public_key(phi)
+
+private_key = get_private_key(phi, public_key)
+
+print("\nRSA keys have been generated.")
+
 #main loop
 while True:
-	#options
-	print("Please select an option: \n	1. Public User\n	2. Private User\n	3. Generate Keys\n	4. Exit\nEnter your choice: ")
 
-	user_exit = int(input())
+    print("Please select user type: \n	1. Public User\n	2. The owner of the keys\n	3. Exit program\n\nEnter your choice: ")
+    user_exit = int(input())
 
 	#Public Key User
-	if user_exit == 1:
-		#if they dont already have a defined key
-		if public_key == None:
-			print("Please enter your public key:")
-			try:
-				public_key = int(input())
-			#If they input anything other than an int
-			except ValueError:
-				print("Key Error")
-				quit()
+    if user_exit == 1:
+        while True:
+            print("As a public user, what would you like to do? \n	1. Encrypt A Message\n	2. Authenticate A Digital Signature\n	3. Exit\n\nEnter your choice: ")
+            user_operation = int(input())
 
-		#options
-		print("Please select an option: \n	1. Encrypt A Message\n	2. Authenticate A Digital Signature\nEnter your choice: ")
-		user_operation = int(input())
-
-		#Encrypting a message
-		if user_operation == 1:
-			print("What is your message?")
-			m = input()
-			print(encrypt_message(m, public_key, n))
-		#Authenticating a signature
-		elif user_operation == 2:
-			#check if user has a defined n for their public key
-			if n == None:
-				print("Please enter n for your public key:")
-				try:
-					n = int(input())
-				#If they input anything other than an int
-				except ValueError:
-					print("Input Error")
-					quit()
-
-			print("Please input the signature:")
-			name = input()
-			
-			#check the signature
-			print(check_signature(name, public_key, n))
+    		#Encrypting a message
+            if user_operation == 1:
+                print("\nEnter a message: ")
+                m = input()
+                lenlist.append(len(m))
+                encrypt_list.append(encrypt_message(m, public_key, n))
+                print("\nMessage was encrypted and sent.\n")
+                
+            #Authenticating a signature
+            elif user_operation == 2:
+                
+                #Check if theres a signature
+                if not signature_list:
+                    print("\nThere are no signature to authenticate.\n")
+                
+                else:
+                    print("The following messages are available:")
+                    index_two = 0
+                    for x in name_list:
+                        index_two += 1
+                        print("	" + str(index_two) + ". " + str(x))
+                    
+                    print("Enter your choice: ")
+                    user_operation = int(input())
+            
+                    #checks if signature is valid
+                    y = str(name_list[user_operation - 1])
+                    z = str(check_signature(signature_list[user_operation - 1], public_key, n))
+            
+                    index_three = 0
+                    for x in y:
+                        if(x != z[index_three]):
+                            b = False
+                        else:
+                            b = True
+                        index_three += 1
+                
+                    if(b):
+                        print("\nSignature is valid.\n")
+                    else:
+                        print("\nSignature is not valid.\n")
+                        
+            elif user_operation == 3:
+                break
+                
+            
 
 	#Private Key User
-	if user_exit == 2:
-		#if they dont already have a defined key
-		if private_key == None:
-			print("Please enter your private key:")
-			try:
-				private_key = int(input())
-			#If they input anything other than an int
-			except ValueError:
-				print("Key Error")
-				quit()
-		
-		#options
-		print("Please select an option: \n	1. Decrypt A Message\n	2. Generate A Digital Signature\nEnter your choice: ")
-		user_operation = int(input())
-
-		#Dencrypting a message
-		if user_operation == 1:
-			#get the cipher text
-			print("What is the message?")
-			try:
-				ciphertext = int(input())
-			except ValueError:
-				print("Message Error")
-				quit()
+    if user_exit == 2:
+        while True:
+            print("As the owner of the keys, what would you like to do? \n	1. Decrypt A Message\n	2. Digitally sign a message\n	3. Show the keys\n	4. Generate a new set of keys\n	5. Exit\n\nEnter your choice: ")
+            user_operation = int(input())
+        
+    		#Dencrypting a message
+            if user_operation == 1:
+            
+                #get the cipher text
+                print("The following messages are available:")
+                index = 0;
+                for x in lenlist:
+                    index += 1
+                    print("	" + str(index) + ". length = " + str(x))
+                
+                print("Enter your choice: ")
+                try:
+                    ciphertext = encrypt_list[int(input())-1]
+                except ValueError:
+                    print("Message Error")
+                    quit()
 				
-			print(decrypt_message(ciphertext, private_key, n))
-		#Creating a signature
-		elif user_operation == 2:
-			#check if they have an n defined for their private key
-			if n == None:
-				print("Please enter n for your private key:")
-				try:
-					n = int(input())
-				#If they input anything other than an int
-				except ValueError:
-					print("Input Error")
-					quit()
-
-			print("Please input your signature:")
-			name = input()
+                print("Decrypted message: " + str(decrypt_message(ciphertext, private_key, n)))
+                
+            #Creating a signature
+            elif user_operation == 2:
 			
-			#generating the signature
-			print(generate_signature(name, private_key, n))
-
-	#User wants to generate new keys
-	if user_exit == 3:
-		p = 1
-		q = 1
-
-		while prime_test(p) != True:
-			p = prime_generation()
-
-		while prime_test(q) != True:
-			q = prime_generation()
-
-		n = p*q
-		phi = (p-1)*(q-1)
-		
-		public_key = get_public_key(phi)
-
-		private_key = get_private_key(phi, public_key)
-
-		#display the keys
-		print("Public Key :: ", public_key, "\n")
-		print("Private Key :: ", private_key, "\n")
-		print("N :: ", n, "\n")
+                print("Enter a message:")
+                name = input()
+			
+                #generating the signature
+                name_list.append(name)
+                signature_list.append(generate_signature(name, private_key, n))
+                print("\nMessage signed and sent.\n")
+            
+            #Show keys
+            elif user_operation == 3:
+                print("\nPublic Key: " + str(public_key))
+                print("\nPrivate Key: " + str(private_key) + "\n")
+            
+            #Generate new keys
+            elif user_operation == 4:
+                p = 1
+                q = 1
+            
+                while prime_test(p) != True:
+                    p = prime_generation()
+                
+                while prime_test(q) != True:
+                    q = prime_generation()
+                
+                n = p*q
+                phi = (p-1)*(q-1)
+            
+                public_key = get_public_key(phi)
+            
+                private_key = get_private_key(phi, public_key)
+            
+            #Exit
+            elif user_operation == 5:
+                break
 
 	#User wants to exit the program
-	if user_exit == 4:
-		quit()
+    if user_exit == 3:
+        print("Bye for now!")
+        break
