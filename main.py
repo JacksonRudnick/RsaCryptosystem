@@ -205,7 +205,7 @@ while True:
                     print("Message Error")
                     quit()
 				
-                print("Decrypted message: \n" + str(decrypt_message(ciphertext, private_key, n)))
+                print("Decrypted message: " + str(decrypt_message(ciphertext, private_key, n)))
                 
             #Creating a signature
             elif user_operation == 2:
